@@ -22,6 +22,10 @@ function addRowToTransactions(rowData) {
 
 function populateTransactionsTable(transactions) {
     console.log('Filling transactions table');
+    // clear table
+    const tableBody = document.querySelector("#myTransactions tbody");
+    tableBody.innerHTML = ''; // Clear all rows
+   
 
     for (const transaction of transactions) {
         const rowData = [
@@ -56,33 +60,41 @@ const getTransactions = async () => {
   */
 getTransactions()
   
-  const addTransaction = async (nome, quantidade, valor, user) => {
-    const url = 'http://127.0.0.1:5000/transactions';
-    const data = {
-      nome: nome,
-      quantidade: quantidade,
-      valor: valor
-    };
-  
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const result = await response.json();
-      console.log('Transaction added successfully:', result);
-      
-      // After adding, refresh the list
+  const addTransaction = async () => {
+    const formData = new FormData();
+
+    let category_id = document.getElementById("TransactionCategoryId").value;
+    formData.append('category_id', category_id);
+    
+    let type_id = document.getElementById("TransactionTypeId").value;
+    formData.append('transaction_type_id', type_id);
+        
+    let user_id = document.getElementById("UserSelect").value;
+    formData.append('user_id', user_id);
+    
+    let date = document.getElementById("NewTransactionDate").value;
+    formData.append('date', date);
+    
+    let value = document.getElementById("NewTransactionValue").value;
+    formData.append('value', value);
+    
+    let url = 'http://127.0.0.1:5000/transaction';
+    const response = await fetch(url, {
+      method: 'post',
+      body: formData
+    })
+
+    if (response.ok) {
+      console.log('Transaction created successfully!');
+      alert('Transaction created successfully!');
+      // clear the form fields
+      document.getElementById("UserFirstName").value = '';
+      document.getElementById("UserLastName").value = '';
+      document.getElementById("UserEmail").value = '';
       getTransactions();
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-    }
+
+    } else {
+      console.log('Error creating transaction!');
+      log_api_error(response);
+    }    
   };

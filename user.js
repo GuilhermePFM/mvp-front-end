@@ -12,6 +12,7 @@ function createUser(){
     formData.append('email', UserEmail);
   
     let url = 'http://127.0.0.1:5000/user';
+    console.log('Creating new user');
     fetch(url, {
       method: 'post',
       body: formData
@@ -24,13 +25,16 @@ function createUser(){
         document.getElementById("UserFirstName").value = '';
         document.getElementById("UserLastName").value = '';
         document.getElementById("UserEmail").value = '';
+        // update list
+        listCategories()
       })
       .catch((error) => {
         console.error('Error:', error);
       });
   }
 
-    async function listCategories(){  
+    async function listUsers(){  
+      console.log('Obtaining list of users');
       let url = 'http://127.0.0.1:5000/users'
       const response = await fetch(url, {
         method: 'get',
@@ -62,4 +66,4 @@ function createUser(){
     });
     
   }
-  listCategories()
+  listUsers()

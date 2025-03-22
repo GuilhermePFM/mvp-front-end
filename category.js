@@ -5,6 +5,7 @@ function createCategory(){
     let categoryName = document.getElementById("NewCategory").value;
     const formData = new FormData();
     formData.append('name', categoryName);
+    console.log('Creating new category: ', categoryName);  
   
     let url = 'http://127.0.0.1:5000/transaction_category';
     fetch(url, {
@@ -13,17 +14,21 @@ function createCategory(){
     })
       .then((response) => response.json())
       .then(() => {
+        console.log('Category created successfully');  
+         
         // Display success message
         alert('Category created successfully!');
         // clear the form fields
         document.getElementById("NewCategory").value = '';
+        listCategories();
       })
       .catch((error) => {
         console.error('Error:', error);
       });
   }
 
-  async function listCategories(){  
+  async function listCategories(){
+    console.log('Updating category list');   
     let url = 'http://127.0.0.1:5000/transaction_categories';
     const response = await fetch(url, {
       method: 'get',
