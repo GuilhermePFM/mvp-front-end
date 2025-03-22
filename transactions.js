@@ -13,29 +13,51 @@ const log_api_error = (response) =>{
         console.error(`Unexpected status code: ${response.status}`);
       }
 }
+
+// Function to add a row to the table
+function addRowToTransactions(rowData) {
+    // Get the table body
+    const tableBody = document.querySelector("#myTransactions tbody");
+
+    // Create a new row
+    const newRow = document.createElement("tr");
+
+    // Create and append cells to the row
+    rowData.forEach(cellData => {
+        const cell = document.createElement("td");
+        cell.textContent = cellData; // Set the text content of the cell
+        newRow.appendChild(cell); // Append the cell to the row
+    });
+
+    // Append the new row to the table body
+    tableBody.appendChild(newRow);
+}
+
+function populateTransactionsTable(transactions) {
+    console.log('Filling transactions table');
+
+    for (const transaction of transactions) {
+        const rowData = [
+            transaction.transaction_date,
+            transaction.value,
+            transaction.first_name,
+            transaction.transaction_type,
+            transaction.transaction_category,
+        ];
+        addRowToTransactions(rowData)
+    }
+}
+
 const getTransactions = async () => {
     let url = 'http://127.0.0.1:5000/transactions';
     const response = await fetch(url, {
       method: 'get',
     })
 
-    if (response.statusCode === 200 && response.ok) {
-        console.log('loading all transactions:', response);
-        
-        const data = response.json();
-        console.log('json:', data);
-        console.log('Filling table:');
-        data.forEach(item => insertList(item.transaction_date, item.value, item.user, item.category, item.type))
-        "created_at": "Fri, 14 Mar 2025 19:44:28 GMT",
-        "id": 1,
-        "transaction_category_id": 1,
-        "transaction_date": null,
-        "transaction_type_id": 1,
-        "user_id": 1,
-        "value": 100.0
-        .catch((error) => {
-            console.error('Error:', error);
-          });
+    if (response.ok) {
+        console.log('Transactions were obtained');        
+        const transactions = await response.json();
+        populateTransactionsTable(transactions);
 
     } else {
         log_api_error(response);
