@@ -1,6 +1,8 @@
+// import { log_api_error } from './utils.js';
 
 
-const createUser =  () => {
+
+function createUser(){
     const formData = new FormData();
     let UserFirstName = document.getElementById("UserFirstName").value;
     let UserLastName = document.getElementById("UserLastName").value;
@@ -28,13 +30,36 @@ const createUser =  () => {
       });
   }
 
-  const listUsers =  () => {  
-    let url = 'http://127.0.0.1:5000/users';
-    fetch(url, {
-      method: 'get'
-    })
-      .then((response) => response.json())
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+    async function listCategories(){  
+      let url = 'http://127.0.0.1:5000/users'
+      const response = await fetch(url, {
+        method: 'get',
+      })
+  
+      if (response.ok) {
+          console.log('Users were obtained');        
+          const users = await response.json();
+          populateUsersDropdown(users);
+  
+      } else {
+          log_api_error(response);
+      }      
+    }
+
+  function populateUsersDropdown(users){  
+    console.log('Filling users dropdown');
+    let dropdown = document.getElementById('UserSelect');
+    
+    // Clear existing options
+    dropdown.innerHTML = '';
+
+    // Populate the dropdown with user options
+    users.forEach(user => {
+        const option = document.createElement('option');
+        option.textContent = `${user.first_name} ${user.last_name}`; // Display full name
+        option.value = user.id; // Use user ID as the value
+        dropdown.appendChild(option);
+    });
+    
   }
+  listCategories()

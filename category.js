@@ -1,6 +1,7 @@
+// import { log_api_error } from './utils.js';
 
 
-const createCategory =  () => {
+function createCategory(){
     let categoryName = document.getElementById("NewCategory").value;
     const formData = new FormData();
     formData.append('name', categoryName);
@@ -22,13 +23,37 @@ const createCategory =  () => {
       });
   }
 
-  const listCategories =  () => {  
+  async function listCategories(){  
     let url = 'http://127.0.0.1:5000/transaction_categories';
-    fetch(url, {
-      method: 'get'
+    const response = await fetch(url, {
+      method: 'get',
     })
-      .then((response) => response.json())
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+
+    if (response.ok) {
+        console.log('Categories were obtained');        
+        const categories = await response.json();
+        populatCategoryDropdown(categories);
+
+    } else {
+        log_api_error(response);
+    }      
   }
+
+  function populatCategoryDropdown(categories){  
+    console.log('categories ', categories);
+    console.log('Filling category dropdown');
+    let dropdown = document.getElementById('TransactionCategoryId');
+    
+    // Clear existing options
+    dropdown.innerHTML = '';
+
+    // Populate the dropdown with user options
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.textContent = `${category.transaction_category}`; // Display full name
+        option.value = category.id; // Use user ID as the value
+        dropdown.appendChild(option);
+    });
+    
+  }
+  listCategories()
