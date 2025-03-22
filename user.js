@@ -44,7 +44,7 @@ function createUser(){
           console.log('Users were obtained');        
           const users = await response.json();
           populateUsersDropdown(users);
-  
+          listUsers();
       } else {
           log_api_error(response);
       }      
