@@ -1,134 +1,51 @@
-body,
-ul,
-li {
-    font-family: tahoma;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    background-color: rgb(225, 222, 199);
-}
-
-header {
-    background-color: rgb(225, 222, 199);
-    text-align: center;
-    position: relative;
+table {
     width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+    border-collapse: collapse;
 }
 
-.title {
-    color: white;
-    width: 100%;
-    background-color: rgb(35, 32, 24);
-    display: inline-block;
-    padding: 2px 0px;
-    position: sticky;
-    top: 0px;
-}
-
-.banner {
-    height: 300px;
-    overflow: hidden;
-}
-
-.banner img {
-    margin: 0px 0px 0px 0px;
-    width: 100%;
-}
-
-.newItem {
-    background-color: rgb(225, 222, 199);
-    padding: 30px 40px;
-    color: white;
-    display: flex;
-    justify-content: center;
-}
-
-.newItem:after {
-    content: "";
-    display: table;
-    clear: both;
-}
-
-#newInput {
-    margin: 0;
-    border: 1px solid rgb(35, 32, 24);
-    width: 25%;
-    padding: 10px;
-    font-size: 16px;
-}
-
-#newQuantity {
-    margin: 0;
-    border: 1px solid rgb(35, 32, 24);
-    width: 8%;
-    padding: 10px;
-    font-size: 16px;
-}
-
-#newPrice {
-    margin: 0;
-    border: 1px solid rgb(35, 32, 24);
-    width: 5%;
-    padding: 10px;
-    font-size: 16px;
-}
-
-
-.addBtn {
-    padding: 9px 10px;
-    background-color: rgb(35, 32, 24);
-    color: white;
-    text-align: center;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.3s;
-    border-radius: 2px;
-}
-
-.addBtn:hover {
-    background-color: #2ab53a;
-    color: white;
-}
-
-.items {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-}
-
-.close:hover {
-    color: #f44336;
-    font-weight: bolder;
-}
-
-table,
 th,
 td {
-    border: 1px solid black;
-    border-collapse: collapse;
+    padding: 0.75rem;
+    vertical-align: top;
+    border: 1px solid #dee2e6;
+}
+
+thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+.finbutton {
+    background-color: rgb(60, 186, 211);
+    color: white;
+    padding: 1rem 1.5rem;
+    font-family: sans-serif;
+    font-size: 1.25rem;
+    border-radius: 0.4rem;
     cursor: pointer;
-    position: relative;
-    padding: 12px 8px 12px 10px;
-    font-size: 18px;
-    transition: 0.2s;
-    text-align: start;
+    margin: 1rem 0.5rem;
+    border: none;
+    transition: background-color 0.1s ease, box-shadow 0.1s ease; /* Smooth transition */
 }
 
-table{
-    background-color: white;
-    width: 50%;
+.finbutton:hover {
+    background-color: rgb(50, 160, 190); /* Darker shade on hover */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Add shading */
 }
 
-tr:nth-child(odd){
-    background-color: #eee;
+tfoot td {
+    text-align: right; /* Align text to the right */
+    font-weight: bold; /* Make the text bold */
+    padding: 0.75rem; /* Add consistent padding */
+    border-top: 2px solid #dee2e6; /* Add a top border for separation */
 }
-
-th:nth-child(1){
-    width: 80%;
-}
-
-tr:hover {
-    background: rgb(200, 199, 199);
-}
-
