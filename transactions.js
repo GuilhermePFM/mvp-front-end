@@ -20,6 +20,26 @@ function addRowToTransactions(rowData) {
     tableBody.appendChild(newRow);
 }
 
+function updateTotal() {
+  // Select the table body and footer total element
+  const tableBody = document.querySelector("#myTransactions tbody");
+  const totalValueCell = document.getElementById("totalValue");
+
+  let total = 0;
+
+  // Iterate through each row in the table body
+  tableBody.querySelectorAll("tr").forEach(row => {
+      const valueCell = row.cells[1]; 
+      if (valueCell) {
+          const value = parseFloat(valueCell.textContent) || 0; 
+          total += value;
+      }
+  });
+
+  // Update the total in the footer
+  totalValueCell.textContent = total.toFixed(2); // Format the total to 2 decimal places
+}
+
 function populateTransactionsTable(transactions) {
     console.log('Filling transactions table');
     // clear table
@@ -37,6 +57,7 @@ function populateTransactionsTable(transactions) {
         ];
         addRowToTransactions(rowData)
     }
+    updateTotal()
 }
 
 const getTransactions = async () => {
