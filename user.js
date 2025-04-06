@@ -26,7 +26,7 @@ function createUser(){
         document.getElementById("UserLastName").value = '';
         document.getElementById("UserEmail").value = '';
         // update list
-        listCategories()
+        listUsers()
       })
       .catch((error) => {
         console.error('Error:', error);
