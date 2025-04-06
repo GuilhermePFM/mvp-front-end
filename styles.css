@@ -1,8 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;700&display=swap');
+/* Add Proxima Nova via a custom font loader or include it in your project */
+@font-face {
+    font-family: 'Proxima Nova';
+    src: url('path-to-proxima-nova.woff2') format('woff2'),
+         url('path-to-proxima-nova.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* General styles */
+body {
+    background-color: #F7FBFE; /* Set the page background color */
+    color: #212529; /* Default text color */
+    font-family: 'Proxima Nova', sans-serif; /* Default font for all text */
+}
+
+/* Headers and Navbar */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'IBM Plex Serif', serif; /* Use IBM Plex Serif for headers and navbar */
+}
+
+#mynavbar{
+    background-color: #B0BE3F; 
+    color: #FFFFFF;
+    font-family: 'IBM Plex Serif', serif;
+}
+#mynavbarcontainer{
+    background-color: #B0BE3F; 
+    color: #FFFFFF;
+    font-family: 'IBM Plex Serif', serif;
+}
+#mynavbar.navbar {
+    background-color: #B0BE3F; /* Green background color */
+    color: #FFFFFF; /* White text color for contrast */
+}
+
+#navbar-text {
+    font-size: 2.3rem; /* Increase the font size */
+    font-weight: bold; /* Keep the text bold */
+    font-family: 'IBM Plex Serif', serif; /* Ensure the correct font is applied */
+    font-style: italic;
+}
+
 table {
+    font-family: 'Proxima Nova', sans-serif; /* Use Proxima Nova for tables */
     width: 100%;
     margin-bottom: 1rem;
     color: #212529;
     border-collapse: collapse;
+}
+th, td {
+    font-family: 'Proxima Nova', sans-serif; /* Use Proxima Nova for tables */
 }
 
 th,
@@ -25,27 +73,51 @@ tbody tr:hover {
     background-color: #e9ecef;
 }
 
+/* Page background */
+body {
+    background-color: #F7FBFE; /* Set the page background color */
+    color: #212529; /* Optional: Set a default text color for readability */
+    font-family: sans-serif; /* Optional: Set a default font for the page */
+}
+
+/* Button styles */
 .finbutton {
-    background-color: rgb(60, 186, 211);
-    color: white;
+    background-color: #B0BE3F; /* Button background color */
+    color: #1E3736; /* Button text color */
     padding: 1rem 1.5rem;
-    font-family: sans-serif;
+    font-family: sans-serif bold;
     font-size: 1.25rem;
     border-radius: 0.4rem;
     cursor: pointer;
     margin: 1rem 0.5rem;
     border: none;
+    font-weight: bold;
     transition: background-color 0.1s ease, box-shadow 0.1s ease; /* Smooth transition */
 }
 
 .finbutton:hover {
-    background-color: rgb(50, 160, 190); /* Darker shade on hover */
+    background-color: #9DAA37; /* Slightly darker shade for hover effect */
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Add shading */
 }
 
+/* Footer styles */
 tfoot td {
     text-align: right; /* Align text to the right */
     font-weight: bold; /* Make the text bold */
     padding: 0.75rem; /* Add consistent padding */
     border-top: 2px solid #dee2e6; /* Add a top border for separation */
+}
+
+button.finbutton-outline {
+    border: 2px transparent #1E3736; /* Custom border */
+    color: #1E3736; /* Custom text color */
+    font-weight: bold; /* Make text bold */
+    background-color: transparent; /* Transparent background */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+button.finbutton-outline:hover {
+    border: 2px solid #1E3736; /* Custom border */
+    background-color: #1E3736; /* Custom hover background */
+    color: #FFFFFF; /* Custom hover text color */
 }
