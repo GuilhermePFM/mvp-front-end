@@ -20,6 +20,12 @@ function addRowToTransactions(rowData) {
     tableBody.appendChild(newRow);
 }
 
+function formatValue(value){
+  const value_float = parseFloat(value) || 0; // Parse the value as a float
+  // Format the value as a number with two decimal places
+  return value_float.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 function updateTotal() {
   // Select the table body and footer total element
   const tableBody = document.querySelector("#myTransactions tbody");
@@ -37,13 +43,7 @@ function updateTotal() {
   });
 
   // Format the total value as currency
-  totalValueCell.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function formatValue(value){
-  const value_float = parseFloat(value) || 0; // Parse the value as a float
-  // Format the value as a number with two decimal places
-  return value_float.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  totalValueCell.textContent = formatValue(total);
 }
 
 function formatDate(dateString) {

@@ -1,12 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;700&display=swap');
-/* Add Proxima Nova via a custom font loader or include it in your project */
-@font-face {
-    font-family: 'Proxima Nova';
-    src: url('path-to-proxima-nova.woff2') format('woff2'),
-         url('path-to-proxima-nova.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-}
+@import url('https://fonts.googleapis.com/css?family=Proxima+Nova');
 
 /* General styles */
 body {
