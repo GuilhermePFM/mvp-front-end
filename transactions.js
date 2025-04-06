@@ -26,6 +26,13 @@ function formatValue(value){
   return value_float.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function currencyToFloat(currencyString) {
+  // Remove non-numeric characters except for the decimal separator
+  const cleanedString = currencyString.replace(/[^\d,-]/g, '').replace(',', '.');
+  // Convert the cleaned string to a float
+  return parseFloat(cleanedString) || 0; // Return 0 if parsing fails
+}
+
 function updateTotal() {
   // Select the table body and footer total element
   const tableBody = document.querySelector("#myTransactions tbody");
@@ -37,13 +44,16 @@ function updateTotal() {
   tableBody.querySelectorAll("tr").forEach(row => {
       const valueCell = row.cells[1]; 
       if (valueCell) {
-          const value = parseFloat(valueCell.textContent) || 0; 
+          console.log("value cell", valueCell);
+          const value = currencyToFloat(valueCell.textContent) || 0; 
           total += value;
       }
   });
 
   // Format the total value as currency
-  totalValueCell.textContent = formatValue(total);
+  console.log("total", total);
+  console.log("total formated", total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+  totalValueCell.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function formatDate(dateString) {
