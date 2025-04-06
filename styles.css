@@ -20,28 +20,6 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'IBM Plex Serif', serif; /* Use IBM Plex Serif for headers and navbar */
 }
 
-#mynavbar{
-    background-color: #B0BE3F; 
-    color: #FFFFFF;
-    font-family: 'IBM Plex Serif', serif;
-}
-#mynavbarcontainer{
-    background-color: #B0BE3F; 
-    color: #FFFFFF;
-    font-family: 'IBM Plex Serif', serif;
-}
-#mynavbar.navbar {
-    background-color: #B0BE3F; /* Green background color */
-    color: #FFFFFF; /* White text color for contrast */
-}
-
-#navbar-text {
-    font-size: 2.3rem; /* Increase the font size */
-    font-weight: bold; /* Keep the text bold */
-    font-family: 'IBM Plex Serif', serif; /* Ensure the correct font is applied */
-    font-style: italic;
-}
-
 table {
     font-family: 'Proxima Nova', sans-serif; /* Use Proxima Nova for tables */
     width: 100%;
