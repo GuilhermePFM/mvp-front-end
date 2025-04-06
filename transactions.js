@@ -36,27 +36,38 @@ function updateTotal() {
       }
   });
 
-  // Update the total in the footer
-  totalValueCell.textContent = total.toFixed(2); // Format the total to 2 decimal places
+  // Format the total value as currency
+  totalValueCell.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function formatValue(value){
+  const value_float = parseFloat(value) || 0; // Parse the value as a float
+  // Format the value as a number with two decimal places
+  return value_float.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatDate(dateString) {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', options);
+}
 function populateTransactionsTable(transactions) {
     console.log('Filling transactions table');
     // clear table
     const tableBody = document.querySelector("#myTransactions tbody");
     tableBody.innerHTML = ''; // Clear all rows
    
-
     for (const transaction of transactions) {
         const rowData = [
-            transaction.transaction_date,
-            transaction.value,
+            formatDate(transaction.transaction_date),
+            formatValue(transaction.value),
             transaction.first_name,
             transaction.transaction_type,
             transaction.transaction_category,
         ];
         addRowToTransactions(rowData)
     }
+    // Format the "Valor" column after populating the table
     updateTotal()
 }
 

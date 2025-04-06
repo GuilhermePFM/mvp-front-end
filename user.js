@@ -33,37 +33,40 @@ function createUser(){
       });
   }
 
-    async function listUsers(){  
-      console.log('Obtaining list of users');
-      let url = 'http://127.0.0.1:5000/users'
-      const response = await fetch(url, {
-        method: 'get',
-      })
-  
-      if (response.ok) {
-          console.log('Users were obtained');        
-          const users = await response.json();
-          populateUsersDropdown(users);
-          listUsers();
-      } else {
-          log_api_error(response);
-      }      
-    }
+  async function listUsers(){  
+    console.log('Obtaining list of users');
+    let url = 'http://127.0.0.1:5000/users'
+    const response = await fetch(url, {
+      method: 'get',
+    })
 
-  function populateUsersDropdown(users){  
-    console.log('Filling users dropdown');
-    let dropdown = document.getElementById('UserSelect');
-    
-    // Clear existing options
-    dropdown.innerHTML = '';
-
-    // Populate the dropdown with user options
-    users.forEach(user => {
-        const option = document.createElement('option');
-        option.textContent = `${user.first_name} ${user.last_name}`; // Display full name
-        option.value = user.id; // Use user ID as the value
-        dropdown.appendChild(option);
-    });
-    
+    if (response.ok) {
+        console.log('Users were obtained');        
+        const users = await response.json();
+        populateUsersDropdown(users);
+    } else {
+        log_api_error(response);
+    }      
   }
-  listUsers()
+
+function openFamilyManagement() {
+  $('#UserModal').modal('show'); // Use jQuery to show the modal
+}
+
+function populateUsersDropdown(users){  
+  console.log('Filling users dropdown');
+  let dropdown = document.getElementById('UserSelect');
+  
+  // Clear existing options
+  dropdown.innerHTML = '';
+
+  // Populate the dropdown with user options
+  users.forEach(user => {
+      const option = document.createElement('option');
+      option.textContent = `${user.first_name} ${user.last_name}`; // Display full name
+      option.value = user.id; // Use user ID as the value
+      dropdown.appendChild(option);
+  });
+  
+}
+listUsers()
