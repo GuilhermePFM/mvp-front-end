@@ -12,7 +12,7 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'IBM Plex Serif', serif; /* Use IBM Plex Serif for headers and navbar */
 }
 #navbar-text {
-    font-size: 2.3rem; 
+    font-size: 2rem; 
     font-weight: bold; 
     font-family: 'IBM Plex Serif', serif;
 } 
@@ -56,23 +56,23 @@ body {
 }
 
 /* Button styles */
-.finbutton {
-    background-color: #B0BE3F; /* Button background color */
-    color: #1E3736; /* Button text color */
+button.finbutton {
+    background-color: #B0BE3F; 
+    color: #1E3736; 
     padding: 1rem 1.5rem;
     font-family: sans-serif bold;
-    font-size: 1.25rem;
+    font-size: 1rem;
     border-radius: 0.4rem;
     cursor: pointer;
     margin: 1rem 0.5rem;
     border: none;
     font-weight: bold;
-    transition: background-color 0.1s ease, box-shadow 0.1s ease; /* Smooth transition */
+    transition: background-color 0.1s ease, box-shadow 0.1s ease; 
 }
 
-.finbutton:hover {
-    background-color: #9DAA37; /* Slightly darker shade for hover effect */
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Add shading */
+button.finbutton:hover {
+    background-color: #9DAA37;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); 
 }
 
 /* Footer styles */

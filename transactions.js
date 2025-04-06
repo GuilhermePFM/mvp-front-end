@@ -103,6 +103,8 @@ const getTransactions = async () => {
 getTransactions()
   
   const addTransaction = async () => {
+    console.log("Abriu add transaction")
+    
     const formData = new FormData();
 
     let category_id = document.getElementById("TransactionCategoryId").value;
@@ -125,6 +127,7 @@ getTransactions()
       method: 'post',
       body: formData
     })
+    console.log("enviando post")
 
     if (response.ok) {
       console.log('Transaction created successfully!');
