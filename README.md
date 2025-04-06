@@ -13,6 +13,8 @@ Este é o repositório do front-end do projeto **Controle Financeiro**, desenvol
 
 A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript**, e **Bootstrap**, garantindo uma experiência responsiva e moderna para os usuários.
 
+O repositório com o Back-end deste projeto é [https://github.com/GuilhermePFM/mvp-api](https://github.com/GuilhermePFM/mvp-api)
+
 ## Organização do Projeto
 
 O projeto está organizado em uma estrutura de arquivos e pastas que facilita o desenvolvimento e a manutenção do código. Abaixo está a descrição de cada arquivo e sua função:
