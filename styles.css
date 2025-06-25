@@ -17,6 +17,8 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'IBM Plex Serif', serif;
 } 
 
+#batchImportSpinner { display:none; } 
+
 table {
     font-family: 'Proxima Nova', sans-serif; /* Use Proxima Nova for tables */
     width: 100%;
