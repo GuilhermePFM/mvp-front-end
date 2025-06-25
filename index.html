@@ -123,7 +123,7 @@
                         <table id="batchTransactionsDataTable"  class="table"> </table>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-success" onclick="classifyBatchTransactions()" data-dismiss="modal" disabled id="batchTransactionsImportButton">Importar</button>
+                        <button type="button" class="btn btn-success" onclick="importBatchTransactions()" data-dismiss="modal" disabled id="batchTransactionsImportButton">Importar</button>
                     </div>
                 </div>
             </div>
@@ -143,12 +143,6 @@
                         <!-- Adicionar uma nova transação -->
                         <section class="newTransaction">
                             <form class="form-horizontal" action="/action_page.php">
-                                <!-- <div class="form-group">
-                                    <label class="control-label col-sm-2" for="email">Email:</label>
-                                    <div class="col-sm-10">
-                                    <input type="email" class="form-control" id="User" placeholder="Email">
-                                    </div>
-                                </div> -->
                                 <div class="form-group">
                                     <label for="Username" class="control-label col-sm-2">Pessoa:</label>
                                     <div class="col-sm-10">

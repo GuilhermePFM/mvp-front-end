@@ -174,7 +174,7 @@ function parseNumber(value) {
 }
 
 
-function displayData(data) {
+async function displayData(data) {
     const table = document.getElementById('batchTransactionsDataTable');
     table.innerHTML = ''; // Clear any existing data
     let adjusted_data = structuredClone(data);
@@ -190,19 +190,47 @@ function displayData(data) {
         headerRow.appendChild(cellElement);
     });
     table.appendChild(headerRow);
-
+    let formsIds = [];
     // Add rows and cells
-    formatBatchTableValues(adjusted_data).forEach((row) => {
+    var formated_values = await formatBatchTableValues(adjusted_data)
+    for (const [i, row] of formated_values.entries()) {
+    // formatBatchTableValues(adjusted_data).forEach((row) => {
         let rowElement = document.createElement('tr');
         
-        headerArray.forEach((column) => {
+        headerArray.forEach( (column)=>{
+            console.log(`${i}: ${column}`);
             let cellElement = document.createElement('td');
-            cellElement.style = "word-wrap: break-word";
-            cellElement.textContent = row[column]; // cell[1] is the value, cell[0] is the key
+            if (column === "Pessoa"){
+                
+                var dropdown_id = "formBatchUsers" + i;
+                formsIds.push(dropdown_id);
+                
+                cellElement.classList.add("form-group");
+                let formElement = document.createElement("div");
+                formElement.classList.add("col-sm-10");
+                let selectElement = document.createElement('select');
+                selectElement.classList.add("form-control");
+                selectElement.id = dropdown_id;
+
+                formElement.appendChild(selectElement);
+                cellElement.appendChild(formElement);
+
+            } else{
+                cellElement.style = "word-wrap: break-word";
+                cellElement.textContent = row[column]; 
+            }
+
             rowElement.appendChild(cellElement);
-        });        
-        table.appendChild(rowElement);
+        });
+             
+        table.appendChild(rowElement); 
+    };
+
+    all_users = await listUsers();
+    formsIds.forEach(dropdown_id => {
+        populateUsersDropdown(all_users, dropdown_id);
     });
+    console.log(formsIds);
 }
 
 
@@ -223,6 +251,7 @@ const classifyBatchTransactions = async (event) =>{
         
         console.log("Running Classifier");
         const classification_result = await callClassifier(jsonData)
+        saveBatchData(classification_result['transactions']) 
         displayData(classification_result['transactions'])
 
     } catch (e) {
@@ -231,6 +260,50 @@ const classifyBatchTransactions = async (event) =>{
         alert(`An error occurred: ${e.message}`);
     }
 };
+
+
+function saveBatchData(data) {
+    localStorage.setItem("batchData", JSON.stringify(data));
+}
+
+
+function retrieveBatchData() {
+  return localStorage.getItem("batchData") 
+}
+
+const importBatchTransactions = async (data) => {
+    console.log("Importing batch transactions");
+    let batchData = retrieveBatchData();
+    if (batchData){
+        batchData = JSON.parse(batchData);
+        let ret = await updateBatchTransactionsDatabase(batchData);       
+    }
+}
+
+const updateBatchTransactionsDatabase = async (data) => {
+    console.log("Updating batch transactions database");
+    let url = 'http://127.0.0.1:5000/batchclassifier';
+
+    try {
+        const response = await fetch(url, {
+            method: 'post',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            // body: {'transactions': data}, // Send data as JSON
+            body: JSON.stringify({'transactions': data}), // Send data as JSON
+        });
+        if (!response.ok) {
+            log_api_error(response);
+            throw new Error(`Classifier request failed with status ${response.status}`);
+        }
+        console.log('Classification was successful!');
+        return await response.json();
+    } catch (error) {
+        console.error('Error running classifier!', error);
+        throw error; // Re-throw to be caught by the caller
+    }
+}
 
 
 const renameColumns = async (data) =>{
@@ -254,16 +327,6 @@ function getTemplateTableNames(){
     return names
 }
 
-// function convert_batch_names(name) {
-//     console.log("Converting batch data to JSON");
-//     const dictionary = getTemplateTableNames();
-//     if (name in dictionary) {
-//         return dictionary[name];
-//     } else {
-//         return name; // Keep original key if no mapping exists
-//         }
-// };    
-
 
 function parseDates(data) {
     const d = new Date(data);
@@ -275,17 +338,7 @@ function parseDates(data) {
 const callClassifier = async (data) =>{
     console.log("Sending data to the classifier");
     let url = 'http://127.0.0.1:5000/batchclassifier';
-    // const formData = new FormData();
-    // formData.append('data', data); // Convert data to JSON string
-    
-    // const myHeaders = new Headers();
-    // myHeaders.append("Content-Type", "application/json");
 
-    // const myRequest = new Request(url, {
-    // method: "POST",
-    // body: JSON.stringify({ username: "example" }),
-    // headers: myHeaders,
-    // });
     try {
         const response = await fetch(url, {
             method: 'post',
@@ -305,97 +358,4 @@ const callClassifier = async (data) =>{
         console.error('Error running classifier!', error);
         throw error; // Re-throw to be caught by the caller
     }
-}
-
-
-
-function updateClassificationColumn(){
-
-}
-
-
-function updateDatabase(){
-    const formData = new FormData();
-    let UserFirstName = document.getElementById("UserFirstName").value;
-    let UserLastName = document.getElementById("UserLastName").value;
-    let UserEmail = document.getElementById("UserEmail").value;
-    formData.append('first_name', UserFirstName);
-    formData.append('last_name', UserLastName);
-    formData.append('email', UserEmail);
-  
-    let url = 'http://127.0.0.1:5000/user';
-    console.log('Creating new user');
-    fetch(url, {
-      method: 'post',
-      body: formData
-    })
-      .then((response) => response.json())
-      .then(() => {
-        // Display success message
-        alert('User created successfully!');
-        // clear the form fields
-        document.getElementById("UserFirstName").value = '';
-        document.getElementById("UserLastName").value = '';
-        document.getElementById("UserEmail").value = '';
-        // update list
-        listUsers()
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  }
-
-  async function listUsers(){  
-    console.log('Obtaining list of users');
-    let url = 'http://127.0.0.1:5000/users'
-    const response = await fetch(url, {
-      method: 'get',
-    })
-
-    if (response.ok) {
-        console.log('Users were obtained');        
-        const users = await response.json();
-        populateUsersDropdown(users);
-    } else {
-        log_api_error(response);
-    }  
-}
-function populateBatchTransactionsTable(transactions) {
-    // console.log('Filling transactions table');
-    // // clear table
-    // const tableBody = document.querySelector("#myTransactions tbody");
-    // tableBody.innerHTML = ''; // Clear all rows
-   
-    // for (const transaction of transactions) {
-    //     const rowData = [
-    //         formatDate(transaction.transaction_date),
-    //         formatValue(transaction.value),
-    //         transaction.first_name,
-    //         transaction.transaction_type,
-    //         transaction.transaction_category,
-    //     ];
-    //     addRowToTransactions(rowData)
-    // }
-    // // Format the "Valor" column after populating the table
-    // updateTotal()
-}
-
-function saveBatchTransactions(transactions) {
-    // console.log('Filling transactions table');
-    // // clear table
-    // const tableBody = document.querySelector("#myTransactions tbody");
-    // tableBody.innerHTML = ''; // Clear all rows
-   
-    // for (const transaction of transactions) {
-    //     const rowData = [
-    //         formatDate(transaction.transaction_date),
-    //         formatValue(transaction.value),
-    //         transaction.first_name,
-    //         transaction.transaction_type,
-    //         transaction.transaction_category,
-    //     ];
-    //     addRowToTransactions(rowData)
-    // }
-    // // Format the "Valor" column after populating the table
-    // updateTotal()
 }

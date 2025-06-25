@@ -1,61 +1,63 @@
-// import { log_api_error } from './utils.js';
-
-
-
 function createUser(){
-    const formData = new FormData();
-    let UserFirstName = document.getElementById("UserFirstName").value;
-    let UserLastName = document.getElementById("UserLastName").value;
-    let UserEmail = document.getElementById("UserEmail").value;
-    formData.append('first_name', UserFirstName);
-    formData.append('last_name', UserLastName);
-    formData.append('email', UserEmail);
-  
-    let url = 'http://127.0.0.1:5000/user';
-    console.log('Creating new user');
-    fetch(url, {
-      method: 'post',
-      body: formData
-    })
-      .then((response) => response.json())
-      .then(() => {
-        // Display success message
-        alert('User created successfully!');
-        // clear the form fields
-        document.getElementById("UserFirstName").value = '';
-        document.getElementById("UserLastName").value = '';
-        document.getElementById("UserEmail").value = '';
-        // update list
-        listUsers()
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  }
+  const formData = new FormData();
+  let UserFirstName = document.getElementById("UserFirstName").value;
+  let UserLastName = document.getElementById("UserLastName").value;
+  let UserEmail = document.getElementById("UserEmail").value;
+  formData.append('first_name', UserFirstName);
+  formData.append('last_name', UserLastName);
+  formData.append('email', UserEmail);
 
-  async function listUsers(){  
-    console.log('Obtaining list of users');
-    let url = 'http://127.0.0.1:5000/users'
-    const response = await fetch(url, {
-      method: 'get',
+  let url = 'http://127.0.0.1:5000/user';
+  console.log('Creating new user');
+  fetch(url, {
+    method: 'post',
+    body: formData
+  })
+    .then((response) => response.json())
+    .then(() => {
+      // Display success message
+      alert('User created successfully!');
+      // clear the form fields
+      document.getElementById("UserFirstName").value = '';
+      document.getElementById("UserLastName").value = '';
+      document.getElementById("UserEmail").value = '';
+      // update list
+      updateUserList()
     })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
 
-    if (response.ok) {
-        console.log('Users were obtained');        
-        const users = await response.json();
-        populateUsersDropdown(users);
-    } else {
-        log_api_error(response);
-    }      
-  }
+async function updateUserList(){
+  all_users = await listUsers();
+  populateUsersDropdown(all_users, 'UserSelect');
+}
+
+async function listUsers(){  
+  console.log('Obtaining list of users');
+  let url = 'http://127.0.0.1:5000/users'
+  const response = await fetch(url, {
+    method: 'get',
+  })
+
+  if (response.ok) {
+      console.log('Users were obtained');        
+      const users = await response.json();
+      return users;
+  } else {
+      log_api_error(response);
+  }      
+}
 
 function openFamilyManagement() {
   $('#UserModal').modal('show'); // Use jQuery to show the modal
 }
 
-function populateUsersDropdown(users){  
+
+function populateUsersDropdown(users, id){  
   console.log('Filling users dropdown');
-  let dropdown = document.getElementById('UserSelect');
+  let dropdown = document.getElementById(id);
   
   // Clear existing options
   dropdown.innerHTML = '';
@@ -69,4 +71,5 @@ function populateUsersDropdown(users){
   });
   
 }
-listUsers()
+
+updateUserList()
