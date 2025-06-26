@@ -192,30 +192,29 @@ async function displayData(data) {
     table.appendChild(headerRow);
     let formsIds = [];
     // Add rows and cells
-    var formated_values = await formatBatchTableValues(adjusted_data)
+    var formated_values = await formatBatchTableValues(adjusted_data);
+    all_users = await listUsers();
+    var user_names = all_users.map(user => [user.first_name+" "+user.last_name, user.id]);
+    var categories = await listCategories();
+    var categories = categories.map(cat => [cat.transaction_category, cat.id]);
+  
     for (const [i, row] of formated_values.entries()) {
-    // formatBatchTableValues(adjusted_data).forEach((row) => {
         let rowElement = document.createElement('tr');
         
         headerArray.forEach( (column)=>{
-            console.log(`${i}: ${column}`);
             let cellElement = document.createElement('td');
             if (column === "Pessoa"){
                 
                 var dropdown_id = "formBatchUsers" + i;
-                formsIds.push(dropdown_id);
+                var dropown_object = createDropdown(dropdown_id, user_names)
+                cellElement.appendChild(dropown_object);
                 
-                cellElement.classList.add("form-group");
-                let formElement = document.createElement("div");
-                formElement.classList.add("col-sm-10");
-                let selectElement = document.createElement('select');
-                selectElement.classList.add("form-control");
-                selectElement.id = dropdown_id;
-
-                formElement.appendChild(selectElement);
-                cellElement.appendChild(formElement);
-
-            } else{
+            } else if (column === "Categoria"){
+                var dropdown_id = "formBatchCategory" + i;
+                var dropown_object = createDropdown(dropdown_id, categories, selected=row[column])
+                cellElement.appendChild(dropown_object);
+            }
+            else{
                 cellElement.style = "word-wrap: break-word";
                 cellElement.textContent = row[column]; 
             }
@@ -225,12 +224,6 @@ async function displayData(data) {
              
         table.appendChild(rowElement); 
     };
-
-    all_users = await listUsers();
-    formsIds.forEach(dropdown_id => {
-        populateUsersDropdown(all_users, dropdown_id);
-    });
-    console.log(formsIds);
 }
 
 
