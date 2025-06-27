@@ -285,6 +285,8 @@ const importBatchTransactions = async (data) => {
         batchData = await enhanceBatchDataWithIds(batchData);
         let ret = await updateBatchTransactionsDatabase(batchData);       
     }
+    // modal('hide');
+    getTransactions();
 }
 
 async function enhanceBatchDataWithIds(data) {
@@ -304,30 +306,19 @@ async function enhanceBatchDataWithIds(data) {
     });
     const enhanced_data = [];
     data.forEach(row => {
+        var value = currencyToFloat(row['Valor']);
+        var date = new Date(row['Data'])
         var enhanced_row = {
-            category_id: treatedcategoriesData[row["Categoria"]].category_id,
+            transaction_category_id: treatedcategoriesData[row["Categoria"]].category_id,
             user_id: treatedUsersData[row["Pessoa"]].user_id,
             description: row['Descrição'],
-            transaction_date: row['Data'],
-            value: row['Valor'],
-            transaction_type_id: 0,
+            transaction_date: date.toISOString(),
+            value:  value,
+            transaction_type_id: 1,
         };
         enhanced_data.push(enhanced_row);
     });
     return enhanced_data;
-    
-
-    // transaction_type_id
-//     "transactions": [
-//     {
-//       "category_id": 0,
-//       "description": "one time purchase",
-//       "transaction_date": "2025-06-27T09:00:24.752148",
-//       "transaction_type_id": 0,
-//       "user_id": 0,
-//       "value": 100
-//     }
-//   ]
 }
 
 const updateBatchTransactionsDatabase = async (data) => {
@@ -348,7 +339,7 @@ const updateBatchTransactionsDatabase = async (data) => {
             log_api_error(response);
             throw new Error(`Classifier request failed with status ${response.status}`);
         }
-        console.log('Classification was successful!');
+        console.log('Batch transaction imported successfully!');
         return await response.json();
     } catch (error) {
         console.error('Error running classifier!', error);
