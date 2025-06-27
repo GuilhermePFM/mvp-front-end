@@ -244,7 +244,6 @@ const classifyBatchTransactions = async (event) =>{
         
         console.log("Running Classifier");
         const classification_result = await callClassifier(jsonData)
-        saveBatchData(classification_result['transactions']) 
         displayData(classification_result['transactions'])
 
     } catch (e) {
@@ -254,30 +253,89 @@ const classifyBatchTransactions = async (event) =>{
     }
 };
 
+function getDisplayedBatchData() {
+    const table = document.getElementById('batchTransactionsDataTable');
+    const rows = Array.from(table.rows);
+    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent);
 
-function saveBatchData(data) {
-    localStorage.setItem("batchData", JSON.stringify(data));
-}
+    const data = rows.slice(1).map(row => {
+        // rows[1].cells[0].textContent
+        const row_obj = {};
+        Array.from(row.querySelectorAll('td')).forEach((cell, index) => {
+            var header = headers[index];
+            if((header === "Pessoa" || header === "Categoria")){
+                var select = cell.firstChild;
+                var value = select.value;
+                var text = select.options[select.selectedIndex].text;
+                row_obj[header] = text;
+            } else {
+                row_obj[header] = cell.textContent;
 
-
-function retrieveBatchData() {
-  return localStorage.getItem("batchData") 
+            }
+        });
+        return row_obj;
+    });
+    return data
 }
 
 const importBatchTransactions = async (data) => {
     console.log("Importing batch transactions");
-    let batchData = retrieveBatchData();
+    var batchData = getDisplayedBatchData();
     if (batchData){
-        batchData = JSON.parse(batchData);
+        batchData = await enhanceBatchDataWithIds(batchData);
         let ret = await updateBatchTransactionsDatabase(batchData);       
     }
 }
 
+async function enhanceBatchDataWithIds(data) {
+    usersData = await listUsers();
+    const treatedUsersData = {};
+    usersData.forEach(entry =>{
+        var name = entry.first_name + " " + entry.last_name;
+        treatedUsersData[name] = entry
+        treatedUsersData[name].user_id = entry.id;
+    });
+
+    categoriesData = await listCategories();
+    const treatedcategoriesData = {};
+    categoriesData.forEach(entry =>{
+        treatedcategoriesData[entry.transaction_category] = entry
+        treatedcategoriesData[entry.transaction_category].category_id = entry.id;
+    });
+    const enhanced_data = [];
+    data.forEach(row => {
+        var enhanced_row = {
+            category_id: treatedcategoriesData[row["Categoria"]].category_id,
+            user_id: treatedUsersData[row["Pessoa"]].user_id,
+            description: row['Descrição'],
+            transaction_date: row['Data'],
+            value: row['Valor'],
+            transaction_type_id: 0,
+        };
+        enhanced_data.push(enhanced_row);
+    });
+    return enhanced_data;
+    
+
+    // transaction_type_id
+//     "transactions": [
+//     {
+//       "category_id": 0,
+//       "description": "one time purchase",
+//       "transaction_date": "2025-06-27T09:00:24.752148",
+//       "transaction_type_id": 0,
+//       "user_id": 0,
+//       "value": 100
+//     }
+//   ]
+}
+
 const updateBatchTransactionsDatabase = async (data) => {
     console.log("Updating batch transactions database");
-    let url = 'http://127.0.0.1:5000/batchclassifier';
-
+    let url = 'http://127.0.0.1:5000/transactions';
+    
     try {
+        debugger;
         const response = await fetch(url, {
             method: 'post',
             headers: {
