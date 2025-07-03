@@ -20,7 +20,7 @@ function createCategory(){
         alert('Category created successfully!');
         // clear the form fields
         document.getElementById("NewCategory").value = '';
-        listCategories();
+        populatCategoryDropdown();
       })
       .catch((error) => {
         console.error('Error:', error);
@@ -37,14 +37,14 @@ function createCategory(){
     if (response.ok) {
         console.log('Categories were obtained');        
         const categories = await response.json();
-        populatCategoryDropdown(categories);
-
+        return categories;
     } else {
         log_api_error(response);
     }      
   }
 
-  function populatCategoryDropdown(categories){  
+async function populatCategoryDropdown(){  
+    var categories = await listCategories();
     console.log('categories ', categories);
     console.log('Filling category dropdown');
     let dropdown = document.getElementById('TransactionCategoryId');
@@ -61,4 +61,5 @@ function createCategory(){
     });
     
   }
-  listCategories()
+
+populatCategoryDropdown();
