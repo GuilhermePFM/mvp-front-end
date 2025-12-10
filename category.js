@@ -7,7 +7,7 @@ function createCategory(){
     formData.append('name', categoryName);
     console.log('Creating new category: ', categoryName);  
   
-    let url = 'http://127.0.0.1:5000/transaction_category';
+    let url = '/api/transaction_category';
     fetch(url, {
       method: 'post',
       body: formData
@@ -29,7 +29,7 @@ function createCategory(){
 
   async function listCategories(){
     console.log('Updating category list');   
-    let url = 'http://127.0.0.1:5000/transaction_categories';
+    let url = '/api/transaction_categories';
     const response = await fetch(url, {
       method: 'get',
     })

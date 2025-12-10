@@ -7,7 +7,7 @@ function createUser(){
   formData.append('last_name', UserLastName);
   formData.append('email', UserEmail);
 
-  let url = 'http://127.0.0.1:5000/user';
+  let url = '/api/user';
   console.log('Creating new user');
   fetch(url, {
     method: 'post',
@@ -36,7 +36,7 @@ async function updateUserList(){
 
 async function listUsers(){  
   console.log('Obtaining list of users');
-  let url = 'http://127.0.0.1:5000/users'
+  let url = '/api/users'
   const response = await fetch(url, {
     method: 'get',
   })

@@ -82,7 +82,7 @@ function populateTransactionsTable(transactions) {
 }
 
 const getTransactions = async () => {
-    let url = 'http://127.0.0.1:5000/transactions';
+    let url = '/api/transactions';
     const response = await fetch(url, {
       method: 'get',
     })
@@ -122,7 +122,7 @@ getTransactions()
     let value = document.getElementById("NewTransactionValue").value;
     formData.append('value', value);
     
-    let url = 'http://127.0.0.1:5000/transaction';
+    let url = '/api/transaction';
     const response = await fetch(url, {
       method: 'post',
       body: formData

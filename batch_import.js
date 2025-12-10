@@ -323,7 +323,7 @@ async function enhanceBatchDataWithIds(data) {
 
 const updateBatchTransactionsDatabase = async (data) => {
     console.log("Updating batch transactions database");
-    let url = 'http://127.0.0.1:5000/transactions';
+    let url = '/api/transactions';
     
     try {
         debugger;
@@ -379,7 +379,7 @@ function parseDates(data) {
 
 const callClassifier = async (data) =>{
     console.log("Sending data to the classifier");
-    let url = 'http://127.0.0.1:5000/batchclassifier';
+    let url = '/api/batchclassifier';
 
     try {
         const response = await fetch(url, {
