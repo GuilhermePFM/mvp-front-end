@@ -14,6 +14,22 @@ A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript** e **B
     - [Fluxo de Classificação Automática](#fluxo-de-classificação-automática)
   - [Funcionalidades](#funcionalidades)
   - [Tecnologias Utilizadas](#tecnologias-utilizadas)
+  - [🐳 Execução com Docker (Recomendado)](#-execução-com-docker-recomendado)
+    - [Por que Docker?](#por-que-docker)
+    - [Pré-requisitos Docker](#pré-requisitos-docker)
+    - [Passo a Passo - Execução Docker](#passo-a-passo---execução-docker)
+      - [1. Clone APENAS o Repositório Front-End](#1-clone-apenas-o-repositório-front-end)
+      - [2. Configure as Variáveis de Ambiente](#2-configure-as-variáveis-de-ambiente)
+      - [3. Inicie a Aplicação](#3-inicie-a-aplicação)
+      - [4. Acesse a Aplicação](#4-acesse-a-aplicação)
+      - [5. Comandos Úteis](#5-comandos-úteis)
+    - [Solução de Problemas Docker](#solução-de-problemas-docker)
+      - [Erro: "Cannot connect to backend"](#erro-cannot-connect-to-backend)
+      - [Erro: "API key not set"](#erro-api-key-not-set)
+      - [Porta já em uso](#porta-já-em-uso)
+      - [Limpar tudo e recomeçar](#limpar-tudo-e-recomeçar)
+    - [Arquitetura Docker](#arquitetura-docker)
+    - [Volumes Persistentes](#volumes-persistentes)
   - [Pré-requisitos](#pré-requisitos)
   - [Como Executar](#como-executar)
     - [Passo 1: Clone o Repositório](#passo-1-clone-o-repositório)
@@ -60,6 +76,7 @@ Este projeto faz parte de uma arquitetura de **3 microserviços**:
    - Realiza uma chamada externa à API do google (gemni)
    - API key foi informada na plataforma do MVP
 
+
 ### Fluxo de Classificação Automática
 
 ```
@@ -99,7 +116,201 @@ Este projeto faz parte de uma arquitetura de **3 microserviços**:
 - **Bootstrap 5.2.3**: Framework CSS para design responsivo e componentes UI
 - **jQuery 3.7.1**: Biblioteca JavaScript para manipulação simplificada do DOM
 - **SheetJS (XLSX 0.18.5)**: Biblioteca para parsing e processamento de arquivos Excel
-- **Fetch API**: Comunicação síncrona com o backend
+- **Fetch API**: Comunicação assíncrona com o backend
+
+## 🐳 Execução com Docker (Recomendado)
+
+### Por que Docker?
+
+A execução via Docker oferece diversas vantagens:
+- ✅ **Setup Simplificado**: Um único comando inicia toda a aplicação
+- ✅ **Clone Automático**: Backend e Embedding API são clonados automaticamente
+- ✅ **Isolamento**: Não interfere com seu ambiente local
+- ✅ **Consistência**: Funciona igual em Windows, Linux e macOS
+- ✅ **Sem Dependências Manuais**: Não precisa instalar Python, pip, etc.
+
+### Pré-requisitos Docker
+
+- [Docker](https://www.docker.com/get-started) instalado (versão 20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) instalado (geralmente vem com Docker Desktop)
+- Chave de API do Google Gemini ([obtenha aqui](https://ai.google.dev/))
+
+### Passo a Passo - Execução Docker
+
+#### 1. Clone APENAS o Repositório Front-End
+
+```bash
+git clone https://github.com/GuilhermePFM/mvp-front-end.git
+cd mvp-front-end
+```
+
+> **Nota**: Você **não precisa** clonar os repositórios backend e embedding. O Docker fará isso automaticamente!
+
+#### 2. Configure as Variáveis de Ambiente
+
+```bash
+# Copie o arquivo de exemplo
+cp env.example .env
+
+# Edite o arquivo .env (use nano, vim, notepad, VSCode, etc.)
+nano .env
+```
+
+**Preencha as seguintes variáveis no arquivo `.env`**:
+
+```env
+# Obrigatório - Sua chave do Google Gemini
+GEMINI_API_KEY=sua_chave_aqui
+
+# Obrigatório - Chave de criptografia (gere uma com o comando abaixo)
+ENC_KEY=sua_chave_de_criptografia_aqui
+
+# Opcional - Portas customizadas (padrões: 8080, 5000, 5001)
+# FRONTEND_PORT=8080
+# BACKEND_API_PORT=5000
+# EMBEDDING_API_PORT=5001
+```
+
+**Gerar chave de criptografia**:
+
+```bash
+# No Linux/Mac
+python3 -c "import secrets; print(secrets.token_hex(32))"
+
+# No Windows PowerShell
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+#### 3. Inicie a Aplicação
+
+```bash
+# Construir e iniciar todos os serviços
+docker-compose up --build
+
+# Ou executar em segundo plano (modo detached)
+docker-compose up --build -d
+```
+
+**O que acontece durante o build**:
+1. ⬇️ Docker clona os repositórios backend e embedding do GitHub
+2. 📦 Instala todas as dependências Python necessárias
+3. 🚀 Inicia os três microserviços com comunicação configurada
+4. ✅ Aguarda os healthchecks confirmarem que tudo está funcionando
+
+**Tempo estimado**: 5-10 minutos na primeira execução (dependendo da internet)
+
+#### 4. Acesse a Aplicação
+
+Após a inicialização completa, acesse:
+
+- **Frontend**: [http://localhost:8080](http://localhost:8080) - Interface principal
+- **Backend API**: [http://localhost:5000](http://localhost:5000) - Documentação Swagger
+- **Embedding API**: [http://localhost:5001](http://localhost:5001) - Documentação OpenAPI
+
+#### 5. Comandos Úteis
+
+```bash
+# Ver logs de todos os serviços
+docker-compose logs -f
+
+# Ver logs de um serviço específico
+docker-compose logs -f frontend
+docker-compose logs -f backend-api
+docker-compose logs -f embedding-api
+
+# Parar a aplicação (mantém os dados)
+docker-compose stop
+
+# Parar e remover containers (mantém volumes com dados)
+docker-compose down
+
+# Parar, remover containers E volumes (apaga dados!)
+docker-compose down -v
+
+# Reconstruir apenas um serviço
+docker-compose build frontend
+docker-compose up -d frontend
+
+# Ver status dos serviços
+docker-compose ps
+```
+
+### Solução de Problemas Docker
+
+#### Erro: "Cannot connect to backend"
+
+```bash
+# Verifique se todos os serviços estão rodando
+docker-compose ps
+
+# Verifique os logs do backend
+docker-compose logs backend-api
+```
+
+#### Erro: "API key not set"
+
+```bash
+# Verifique se o arquivo .env existe e contém GEMINI_API_KEY
+cat .env
+
+# Reinicie os serviços
+docker-compose restart
+```
+
+#### Porta já em uso
+
+Se receber erro de porta já utilizada, edite o `.env`:
+
+```env
+FRONTEND_PORT=8081  # Em vez de 8080
+BACKEND_API_PORT=5001  # Em vez de 5000
+```
+
+#### Limpar tudo e recomeçar
+
+```bash
+# Remove containers, networks, volumes e imagens
+docker-compose down -v
+docker system prune -a
+
+# Rebuild completo
+docker-compose up --build
+```
+
+### Arquitetura Docker
+
+```
+┌─────────────────┐
+│   Frontend      │  localhost:8080
+│   (nginx)       │  
+└────────┬────────┘
+         │ /api/* → backend-api:5000
+         ↓
+┌─────────────────┐
+│  Backend API    │  localhost:5000
+│   (Flask)       │  
+└────────┬────────┘
+         │ HTTP → embedding-api:5001
+         ↓
+┌─────────────────┐
+│  Embedding API  │  localhost:5001
+│   (Flask)       │  
+└─────────────────┘
+         │ HTTPS → Gemini API
+         ↓
+   Google Gemini
+```
+
+### Volumes Persistentes
+
+O Docker Compose cria volumes para persistir dados:
+
+- `finance-backend-db`: Banco de dados SQLite (transações, usuários, categorias)
+- `finance-backend-logs`: Logs da aplicação
+
+**Dados são mantidos entre restarts**, a menos que você execute `docker-compose down -v`.
+
+---
 
 ## Pré-requisitos
 
@@ -145,6 +356,17 @@ O backend deve estar rodando em `http://127.0.0.1:5001` (configuração padrão)
 ### Passo 5: Acesse a Aplicação
 Abra seu navegador e acesse a URL onde a aplicação está sendo servida. A interface estará pronta para uso!
 
+Com o docker compose rodando, utilize os endpoints:
+|Service|	URL|	Description|
+|-------|-----------|--------|
+|Frontend|	http://localhost:8080|	Main web application|
+|Backend API|	http://localhost:5000	|Backend REST API|
+|Backend Swagger|	http://localhost:5000/openapi/swagger	|Interactive API docs|
+|Backend ReDoc|	http://localhost:5000/openapi/redoc	|Alternative API docs|
+|Embedding API|	http://localhost:5001|	Embedding microservice|
+|Embedding Docs|	http://localhost:5001/openapi|	Embedding API docs|
+
+
 ## Formato do Arquivo de Importação
 
 Para utilizar a funcionalidade de importação em lote, seu arquivo Excel (.xlsx) deve seguir o formato específico:
@@ -176,7 +398,7 @@ Para utilizar a funcionalidade de importação em lote, seu arquivo Excel (.xlsx
 O projeto está organizado em uma estrutura de arquivos e pastas que facilita o desenvolvimento e a manutenção do código.
 
 ### Estrutura de Arquivos
-```plaintext 
+```plaintext ****
 mvp-front-end/
 ├── index.html                  # Arquivo principal da aplicação (estrutura HTML)
 ├── styles.css                  # Arquivo de estilos personalizados (CSS)
