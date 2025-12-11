@@ -12,6 +12,11 @@ WORKDIR /app
 
 # Configure git to skip credential prompt and disable credential helper
 ENV GIT_TERMINAL_PROMPT=0
+
+# Cache busting argument to force fresh git clone
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
+
 RUN git config --global credential.helper "" && \
     git config --global advice.detachedHead false && \
     git clone --depth 1 --single-branch --branch main https://github.com/GuilhermePFM/mvp-embedding.git . && \
