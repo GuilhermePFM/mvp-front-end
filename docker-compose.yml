@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile.backend
       args:
-        - CACHEBUST=${CACHEBUST:-1}
+        - BACKEND_CACHEBUST=${BACKEND_CACHEBUST:-1}
     container_name: finance-backend
     ports:
       - "${BACKEND_API_PORT:-5000}:5000"
@@ -52,7 +52,7 @@ services:
       context: .
       dockerfile: Dockerfile.embedding
       args:
-        - CACHEBUST=${CACHEBUST:-1}
+        - EMBEDDING_CACHEBUST=${EMBEDDING_CACHEBUST:-1}
     container_name: finance-embedding
     ports:
       - "${EMBEDDING_API_PORT:-5001}:5001"

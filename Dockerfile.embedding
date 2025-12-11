@@ -13,9 +13,9 @@ WORKDIR /app
 # Configure git to skip credential prompt and disable credential helper
 ENV GIT_TERMINAL_PROMPT=0
 
-# Cache busting argument to force fresh git clone
-ARG CACHEBUST=1
-RUN echo "Cache bust: $CACHEBUST"
+# Cache busting argument with git hash to force fresh git clone only when repo changes
+ARG EMBEDDING_CACHEBUST=1
+RUN echo "Building embedding with git hash: $EMBEDDING_CACHEBUST"
 
 RUN git config --global credential.helper "" && \
     git config --global advice.detachedHead false && \
@@ -30,5 +30,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5001
 
 # Run with gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5001", "--timeout", "60", "app:app"]
+CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:5001", "--timeout", "60", "app:app"]
 

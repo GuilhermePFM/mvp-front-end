@@ -1,8 +1,9 @@
 #!/bin/bash
-# Build script with automatic cache busting for backend-api and embedding-api
-# This ensures the latest code is always fetched from the git repositories
+# Build script with git hash-based cache busting for backend-api and embedding-api
+# Only rebuilds when the remote git repositories have new commits
 
-export CACHEBUST=$(date +%s)
-echo "Building with CACHEBUST=$CACHEBUST"
-docker-compose build backend-api embedding-api
+set -e
 
+echo "Fetching latest git hashes from remote repositories..."
+./build-backend.sh
+./build-embedding.sh

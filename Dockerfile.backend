@@ -13,9 +13,9 @@ WORKDIR /app
 # Configure git to skip credential prompt and disable credential helper
 ENV GIT_TERMINAL_PROMPT=0
 
-# Cache busting argument to force fresh git clone
-ARG CACHEBUST=1
-RUN echo "Cache bust: $CACHEBUST"
+# Cache busting argument with git hash to force fresh git clone only when repo changes
+ARG BACKEND_CACHEBUST=1
+RUN echo "Building backend with git hash: $BACKEND_CACHEBUST"
 
 RUN git config --global credential.helper "" && \
     git config --global advice.detachedHead false && \
