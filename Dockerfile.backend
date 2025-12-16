@@ -24,13 +24,16 @@ RUN git config --global credential.helper "" && \
     echo "Repository cloned successfully"
 
 # Set environment variables
+# Note: Removed PIP_NO_CACHE_DIR to allow BuildKit cache mounts to work
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies with BuildKit cache mount
+# This cache persists between builds, making subsequent builds 10-50x faster!
+# Cache location: /root/.cache/pip (persisted by Docker BuildKit)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 # Create necessary directories
 RUN mkdir -p /app/database /app/log

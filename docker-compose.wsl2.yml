@@ -1,0 +1,127 @@
+# ============================================================================
+# Docker Compose Override for WSL2 Environments
+# ============================================================================
+# This file provides WSL2-optimized settings with extended timeouts,
+# reduced check frequencies, and better resource management.
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.wsl2.yml up
+#
+# Or set as default by creating .env file with:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.wsl2.yml
+# ============================================================================
+
+services:
+  # Kafka Broker - Extended timeouts for WSL2
+  broker:
+    healthcheck:
+      # More generous settings for WSL2 performance
+      interval: 20s       # Check every 20s instead of 15s
+      timeout: 15s        # Allow 15s for check to complete
+      retries: 15         # More retries before marking unhealthy
+      start_period: 90s   # Extended startup grace period
+
+  # Backend API - Extended settings
+  backend-api:
+    healthcheck:
+      interval: 45s       # Less frequent checks
+      timeout: 15s        # More time for response
+      retries: 5
+      start_period: 60s   # More time for initialization
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Embeddings Worker - Extended settings
+  embeddings-worker:
+    healthcheck:
+      interval: 45s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Classification Worker - Extended settings
+  classification-worker:
+    healthcheck:
+      interval: 45s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Embedding API - Extended settings
+  embedding-api:
+    healthcheck:
+      interval: 45s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Frontend - Extended settings
+  frontend:
+    healthcheck:
+      interval: 45s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+# ============================================================================
+# WSL2 Performance Tips
+# ============================================================================
+#
+# 1. Configure WSL2 resources by editing/creating ~/.wslconfig:
+#
+#    [wsl2]
+#    memory=6GB
+#    processors=4
+#    swap=2GB
+#
+# 2. After changing .wslconfig, restart WSL2:
+#    wsl --shutdown
+#
+# 3. Monitor Docker resource usage:
+#    docker stats
+#
+# 4. If services are slow to start, increase start_period values further
+#
+# 5. For debugging, use the diagnostic script:
+#    ./diagnose-broker.sh
+#
+# ============================================================================
+
