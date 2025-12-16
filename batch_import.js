@@ -20,7 +20,7 @@ const sendBatchFile = async (event) => {
         const event = new CustomEvent("batchFileLoaded", { detail: { message: "File was loaded" } });
         document.dispatchEvent(event);
     } catch (e) {
-        debugger;
+        ;
         console.error("Error reading file:", e);
         alert(`An error occurred: ${e.message}`);
     }
@@ -275,7 +275,7 @@ async function displayData(data) {
 //         displayData(classification_result['transactions'])
 
 //     } catch (e) {
-//         debugger;
+//         ;
 //         console.error("Error during batch classification:", e);
 //         alert(`An error occurred: ${e.message}`);
 //     }
@@ -387,7 +387,7 @@ const updateBatchTransactionsDatabase = async (data) => {
     let url = '/api/transactions';
 
     try {
-        debugger;
+        ;
         const response = await fetch(url, {
             method: 'post',
             headers: {
