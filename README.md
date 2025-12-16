@@ -36,10 +36,7 @@ A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript** e **B
     - [Categorias](#categorias)
     - [Tipos de Transação](#tipos-de-transação)
   - [Fluxo de Uso](#fluxo-de-uso)
-    - [1. Importar Transações (Recomendado)](#1-importar-transações-recomendado)
-    - [3. Adicionar Transação Manual (Alternativa)](#3-adicionar-transação-manual-alternativa)
-    - [4. Visualizar e Analisar](#4-visualizar-e-analisar)
-  - [Contribuição](#contribuição)
+    - [1. Importar Transações](#1-importar-transações)
 
 
 
@@ -293,6 +290,8 @@ mvp-front-end/
 ├── index.html                  # Arquivo principal da aplicação (estrutura HTML)
 ├── styles.css                  # Arquivo de estilos personalizados (CSS)
 ├── batch_import.js             # Script para importação em lote e classificação ML
+├── async_classification.js    # Função para enviar batch para classificação assíncrona
+├── polling.js                  # Função para polling do status do job de classificação
 ├── transactions.js             # Script para gerenciar transações e categorias
 ├── transaction_types.js        # Script para gerenciar tipos de transações
 ├── transaction_validation.js   # Script para validação de transações
@@ -315,15 +314,27 @@ mvp-front-end/
   - Define o design visual: cores, fontes, espaçamentos e estilos de componentes
   - Complementa os estilos do Bootstrap com customizações específicas
 
+- **`async_classification.js`**:
+  - Função `sendBatchForClassification()` que envia transações para classificação assíncrona
+  - Faz POST para `/api/batch-classify-async` e retorna jobId
+  - Utilizado por `batch_import.js` para iniciar o processo de classificação
+
+- **`polling.js`**:
+  - Função `pollJobStatus()` que consulta o status do job de classificação
+  - Faz polling GET `/api/batch-jobs/{jobId}` a cada 2 segundos até completar
+  - Retorna transações classificadas quando status='completed'
+  - Utilizado por `batch_import.js` para acompanhar o progresso
+
 - **`batch_import.js`** ⭐:
   - **Funcionalidade principal do projeto**
+  - Orquestra o fluxo completo de importação em lote
   - Parse de arquivos Excel (.xlsx) usando a biblioteca SheetJS
   - Validação de formato e estrutura dos dados importados
-  - Integração com API de classificação ML assíncrona (`/api/batch-classify-async`)
-  - Sistema de polling para acompanhar progresso do job
-  - Exibição de preview interativo com dropdowns para revisão
+  - Utiliza `sendBatchForClassification()` (async_classification.js) para submeter job
+  - Utiliza `pollJobStatus()` (polling.js) para acompanhar progresso
+  - Exibição de preview interativo com dropdowns para revisão de categorias
   - Formatação de valores monetários e datas
-  - Envio de lote de transações para o backend (`/transactions`)
+  - Envio de lote de transações para o backend (`POST /transactions`)
 
 - **`transactions.js`**:
   - Script responsável por gerenciar transações financeiras
@@ -395,7 +406,7 @@ A aplicação front-end consome os seguintes endpoints do backend:
 ## Fluxo de Uso
 
 
-### 1. Importar Transações (Recomendado)
+### 1. Importar Transações 
 
 **Com Classificação Automática ML:**
 1. Prepare um arquivo Excel seguindo o [formato especificado](#formato-do-arquivo-de-importação)
@@ -407,27 +418,6 @@ A aplicação front-end consome os seguintes endpoints do backend:
 7. Selecione as pessoas responsáveis por cada transação
 8. Clique em "Importar" para salvar definitivamente
 
-### 3. Adicionar Transação Manual (Alternativa)
-
-1. Clique no botão "Nova Transação"
-2. Preencha os campos:
-   - Pessoa: Selecione o membro da família
-   - Tipo: Escolha o tipo de transação
-   - Classe: Selecione a categoria
-   - Data: Escolha a data da transação
-   - Valor: Insira o valor em reais (R$)
-3. Clique em "Adicionar"
-
-### 4. Visualizar e Analisar
-
-- Todas as transações aparecem na tabela principal
-- O total é calculado automaticamente no rodapé da tabela
-- Use os dados para acompanhar gastos e receitas da família
-
-## Contribuição
-
-Este projeto foi desenvolvido como MVP para a Pós-Graduação em Engenharia de Software da PUC Rio.
-
-Para reportar problemas ou sugerir melhorias, entre em contato com o desenvolvedor ou abra uma issue no repositório.
+**Este projeto foi desenvolvido como MVP para a Pós-Graduação em Engenharia de Software da PUC Rio.**
 
 ---
