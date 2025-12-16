@@ -30,7 +30,6 @@ const sendBatchFile = async (event) => {
 // Add an event listener for the custom event
 document.addEventListener("batchFileLoaded", async function (event) {
     $('#batchImportSpinner').show();
-    toggleBatchImportButton();
     
     try {
         console.log("Starting async batch classification process");
@@ -87,10 +86,10 @@ const handleBatchFile = (file) => {
     const reader = new FileReader();
 
     return new Promise((resolve, reject) => {
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const jsonData = excelToArray(event);
-                displayData(jsonData);
+                await displayData(jsonData);  // Wait for table to be populated
                 resolve(jsonData);
             } catch (error) {
                 reject(error);
@@ -410,17 +409,53 @@ const updateBatchTransactionsDatabase = async (data) => {
 }
 
 
-const renameColumns = async (data) => {
-    console.log("Converting data array to JSON");
-    let header_maping = getTemplateTableNames(); // Get the header mapping from the template
+/**
+ * Converts Brazilian locale date string to ISO format
+ * @param {string} dateString - Date like "06/01/2025, 00:00:00"
+ * @returns {string} ISO date like "2025-01-06T00:00:00"
+ */
+function convertToISODate(dateString) {
+    try {
+        // Parse the locale string back to Date object
+        const date = new Date(dateString);
+        
+        // Check if valid date
+        if (isNaN(date.getTime())) {
+            console.warn('Invalid date:', dateString);
+            return new Date().toISOString(); // Fallback to current date
+        }
+        
+        return date.toISOString();
+    } catch (error) {
+        console.error('Error converting date:', dateString, error);
+        return new Date().toISOString();
+    }
+}
 
-    let renamedJsonData = data.map(row =>
-        Object.fromEntries(
-            // convert prices to array, map each key/value pair into another pair
-            // and then fromEntries gives back the object
-            Object.entries(row).map(entry => [header_maping[entry[0]], entry[1]])
-        )
-    );
+const renameColumns = async (data) => {
+    console.log("Converting data array to API format");
+    let header_mapping = getTemplateTableNames(); // Get the header mapping from the template
+
+    let renamedJsonData = data.map(row => {
+        let transformed = {};
+        
+        Object.entries(row).forEach(([key, value]) => {
+            const internalKey = header_mapping[key];
+            
+            // Transform values to API format
+            if (key === 'Data') {
+                // Convert "06/01/2025, 00:00:00" to ISO format
+                transformed[internalKey] = convertToISODate(value);
+            } else if (key === 'Valor') {
+                // Convert "R$ 15,00" to number
+                transformed[internalKey] = currencyToFloat(value);
+            } else {
+                transformed[internalKey] = value;
+            }
+        });
+        
+        return transformed;
+    });
 
     return renamedJsonData;
 }
