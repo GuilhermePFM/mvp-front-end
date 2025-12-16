@@ -1,7 +1,7 @@
 # Controle Financeiro - MVP Front-End
 ## Descrição do Projeto
 
-Este é o repositório do **front-end** do projeto **Controle Financeiro**, desenvolvido como parte do MVP (Minimum Viable Product) para a Pós-Graduação em Engenharia de Software da PUC Rio. O objetivo do projeto é fornecer uma interface intuitiva e funcional para gerenciar finanças pessoais e familiares, permitindo o controle de transações, categorias e usuários de forma eficiente.
+Este é o repositório do **front-end** do projeto **Controle Financeiro**, desenvolvido como parte do MVP (Minimum Viable Product) para a Pós-Graduação em Engenharia de Software da PUC Rio. O objetivo do projeto é fornecer uma interface intuitiva e funcional para gerenciar finanças pessoais, permitindo o controle de transações, categorias e usuários de forma eficiente.
 
 A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript** e **Bootstrap**, garantindo uma experiência responsiva e moderna para os usuários.
 
@@ -11,32 +11,20 @@ A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript** e **B
   - [Descrição do Projeto](#descrição-do-projeto)
   - [Índice](#índice)
   - [Arquitetura do Sistema](#arquitetura-do-sistema)
-    - [Fluxo de Classificação Automática](#fluxo-de-classificação-automática)
+    - [Componentes do Sistema](#componentes-do-sistema)
+    - [Fluxo de Classificação Automática (Assíncrono)](#fluxo-de-classificação-automática-assíncrono)
   - [Funcionalidades](#funcionalidades)
   - [Tecnologias Utilizadas](#tecnologias-utilizadas)
-  - [🐳 Execução com Docker (Recomendado)](#-execução-com-docker-recomendado)
-    - [Por que Docker?](#por-que-docker)
+  - [🐳 Execução com Docker](#-execução-com-docker)
     - [Pré-requisitos Docker](#pré-requisitos-docker)
     - [Passo a Passo - Execução Docker](#passo-a-passo---execução-docker)
       - [1. Clone APENAS o Repositório Front-End](#1-clone-apenas-o-repositório-front-end)
       - [2. Configure as Variáveis de Ambiente](#2-configure-as-variáveis-de-ambiente)
       - [3. Inicie a Aplicação](#3-inicie-a-aplicação)
       - [4. Acesse a Aplicação](#4-acesse-a-aplicação)
-      - [5. Comandos Úteis](#5-comandos-úteis)
-    - [Solução de Problemas Docker](#solução-de-problemas-docker)
-      - [Erro: "Cannot connect to backend"](#erro-cannot-connect-to-backend)
-      - [Erro: "API key not set"](#erro-api-key-not-set)
-      - [Porta já em uso](#porta-já-em-uso)
-      - [Limpar tudo e recomeçar](#limpar-tudo-e-recomeçar)
-    - [Arquitetura Docker](#arquitetura-docker)
+      - [6. Ferramentas de Monitoramento](#6-ferramentas-de-monitoramento)
     - [Volumes Persistentes](#volumes-persistentes)
-  - [Pré-requisitos](#pré-requisitos)
-  - [Como Executar](#como-executar)
-    - [Passo 1: Clone o Repositório](#passo-1-clone-o-repositório)
-    - [Passo 2: Configure o Backend](#passo-2-configure-o-backend)
-    - [Passo 3: Configure a API de Embeddings](#passo-3-configure-a-api-de-embeddings)
-    - [Passo 4: Inicie a Aplicação Front-End](#passo-4-inicie-a-aplicação-front-end)
-    - [Passo 5: Acesse a Aplicação](#passo-5-acesse-a-aplicação)
+    - [Usuários WSL2](#usuários-wsl2)
   - [Formato do Arquivo de Importação](#formato-do-arquivo-de-importação)
     - [Exemplo de Template Excel](#exemplo-de-template-excel)
   - [Organização do Projeto](#organização-do-projeto)
@@ -57,46 +45,62 @@ A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript** e **B
 
 ## Arquitetura do Sistema
 
-Este projeto faz parte de uma arquitetura de **3 microserviços**:
+Este projeto utiliza uma arquitetura de **microserviços distribuídos** com processamento assíncrono via Kafka:
 
 ![alt text](frontend.png)
 
-1. **Front-End (Este Repositório)**: Interface web que permite aos usuários gerenciar suas finanças, importar transações e visualizar dados. Comunicação via API REST com o backend.
+### Componentes do Sistema
 
-2. [Backend Geral](https://github.com/GuilhermePFM/mvp-api):
+1. **Frontend (Nginx)**: Interface web que permite aos usuários gerenciar suas finanças, importar transações e visualizar dados. Comunicação via API REST com o backend.
+
+2. **[Backend API](https://github.com/GuilhermePFM/mvp-api)** (Flask):
    - Gerencia a lógica de negócio
    - Armazena dados de usuários, transações, categorias e tipos
-   - Orquestra a comunicação com a API de embeddings
+   - Orquestra jobs de classificação via Kafka
    - Fornece endpoints REST para o front-end
-   - Utiliza modelos de Machine Learning para classificação automática
-   - Retorna sugestões de categorias baseadas em similaridade semântica
 
-3. [API de Embeddings](https://github.com/GuilhermePFM/mvp-embedding): Microserviço especializado que:
+3. **[Embedding API](https://github.com/GuilhermePFM/mvp-embedding)** (Flask): Microserviço especializado que:
    - Calcula embeddings (representações vetoriais) das descrições de transações
-   - Realiza uma chamada externa à API do google (gemni)
+   - Integra com a API do Google Gemini
    - API key foi informada na plataforma do MVP
 
+4. **Kafka Broker**: Message broker para processamento assíncrono de jobs de classificação em lote. Possui dois tópicos: 
+   1. batch-jobs: armazena um pedido de classificação
+   2. embeddings-results: armazena o resultado de um embedding
 
-### Fluxo de Classificação Automática
+5. **Embeddings Worker**: Worker Kafka que consome do `batch-jobs`, solicita embeddings para Embedding API e publica resultados no tópico `embeddings-results`
+
+6. **Classification Worker**: Worker Kafka que consome de `embeddings-results`, classifica transações usando o modelo ML e salva na base de dados
+
+7. **Kafka Topics Init**: Container de inicialização que cria os tópicos necessários (`batch-jobs`, `embeddings-results`).
+
+
+### Fluxo de Classificação Automática (Assíncrono)
 
 ```
 1. Usuário faz upload de arquivo Excel com transações
    ↓
-2. Front-end processa o arquivo e envia dados para o backend (POST /batchclassifier)
+2. Frontend POST /api/batch-classify-async → Backend (retorna jobId)
    ↓
-3. Backend extrai as descrições das transações
+3. Backend publica job no tópico Kafka 'batch-jobs'
    ↓
-4. Backend envia descrições para a API de Embeddings
+4. Embeddings Worker consome o job
    ↓
-5. API de Embeddings calcula vetores 
+5. Worker chama Embedding API → Google Gemini
    ↓
-6. Backend retorna transações classificadas para o front-end
+6. Worker publica resultados no tópico 'embeddings-results'
    ↓
-7. Usuário visualiza preview com categorias sugeridas
+7. Classification Worker consome os resultados
    ↓
-8. Usuário pode revisar/ajustar categorias antes de confirmar importação
+8. Worker classifica usando modelo ML e armazena na base de dados
    ↓
-9. Transações são salvas no banco de dados (POST /transactions)
+9. Frontend faz polling GET /api/batch-jobs/{jobId} a cada 2 segundos
+   ↓
+10. Quando status='completed', exibe transações classificadas
+   ↓
+11. Usuário revisa/ajusta categorias sugeridas
+   ↓
+12. Usuário confirma → POST /transactions salva no banco de dados
 ```
 
 ## Funcionalidades
@@ -118,25 +122,28 @@ Este projeto faz parte de uma arquitetura de **3 microserviços**:
 - **SheetJS (XLSX 0.18.5)**: Biblioteca para parsing e processamento de arquivos Excel
 - **Fetch API**: Comunicação assíncrona com o backend
 
-## 🐳 Execução com Docker (Recomendado)
-
-### Por que Docker?
-
-A execução via Docker oferece diversas vantagens:
-- ✅ **Setup Simplificado**: Um único comando inicia toda a aplicação
-- ✅ **Clone Automático**: Backend e Embedding API são clonados automaticamente
-- ✅ **Isolamento**: Não interfere com seu ambiente local
-- ✅ **Consistência**: Funciona igual em Windows, Linux e macOS
-- ✅ **Sem Dependências Manuais**: Não precisa instalar Python, pip, etc.
+## 🐳 Execução com Docker
 
 ### Pré-requisitos Docker
 
 - [Docker](https://www.docker.com/get-started) instalado (versão 20.10+)
 - [Docker Compose](https://docs.docker.com/compose/install/) instalado (geralmente vem com Docker Desktop)
-- Chave de API do Google Gemini ([obtenha aqui](https://ai.google.dev/))
 
 ### Passo a Passo - Execução Docker
+O projeto utiliza um sistema inteligente de cache busting baseado em git hash. Os scripts de build apenas recompilam serviços quando seus repositórios remotos têm novos commits.
 
+**Build de todos os serviços:**
+
+```bash
+./build.sh  # Só reconstrói se os repositórios remotos mudaram
+```
+
+**Build de serviço específico:**
+
+```bash
+./build-backend.sh      # Somente mudanças no mvp-api
+./build-embedding.sh    # Somente mudanças no mvp-embedding
+```
 #### 1. Clone APENAS o Repositório Front-End
 
 ```bash
@@ -159,45 +166,43 @@ nano .env
 **Preencha as seguintes variáveis no arquivo `.env`**:
 
 ```env
-# Obrigatório - Sua chave do Google Gemini
-GEMINI_API_KEY=sua_chave_aqui
+GEMINI_API_KEY=enviada na plataforma do MVP
+ENC_KEY=enviada na plataforma do MVP
 
-# Obrigatório - Chave de criptografia (gere uma com o comando abaixo)
-ENC_KEY=sua_chave_de_criptografia_aqui
+## Backend
+# Kafka Configuration
+KAFKA_BROKER_ADDRESS=localhost:9092
+BATCH_JOBS_TOPIC=batch-jobs
+EMBEDDINGS_RESULTS_TOPIC=embeddings-results
+EMBEDDINGS_CONSUMER_GROUP=embeddings_worker
+CLASSIFICATION_CONSUMER_GROUP=classification_worker
 
-# Opcional - Portas customizadas (padrões: 8080, 5000, 5001)
-# FRONTEND_PORT=8080
-# BACKEND_API_PORT=5000
-# EMBEDDING_API_PORT=5001
-```
+# External Embedding API
+EMBEDDING_API_URL=http://embedding-api:5001
 
-**Gerar chave de criptografia**:
-
-```bash
-# No Linux/Mac
-python3 -c "import secrets; print(secrets.token_hex(32))"
-
-# No Windows PowerShell
-python -c "import secrets; print(secrets.token_hex(32))"
+# Docker BuildKit configuration (recommended for faster builds)
+# Enables pip cache persistence between builds (10-50x faster after first build)
+DOCKER_BUILDKIT=1
+COMPOSE_DOCKER_CLI_BUILD=1
 ```
 
 #### 3. Inicie a Aplicação
 
 ```bash
-# Construir e iniciar todos os serviços
-docker-compose up --build
-
-# Ou executar em segundo plano (modo detached)
-docker-compose up --build -d
+# Recomendado: Startup interativo com monitoramento
+./start.sh
 ```
 
-**O que acontece durante o build**:
-1. ⬇️ Docker clona os repositórios backend e embedding do GitHub
-2. 📦 Instala todas as dependências Python necessárias
-3. 🚀 Inicia os três microserviços com comunicação configurada
-4. ✅ Aguarda os healthchecks confirmarem que tudo está funcionando
+**O que acontece durante o startup**:
+1. ⬇️ Docker clona os repositórios backend e embedding do GitHub (primeira vez)
+2. 📦 Instala todas as dependências Python necessárias (primeira vez)
+3. 🚀 Inicia os 7 serviços em ordem de dependência
+4. ✅ Aguarda os healthchecks confirmarem que cada serviço está saudável
+5. 📊 Script de monitoramento mostra progresso visual (se usar `./start.sh`)
 
-**Tempo estimado**: 5-10 minutos na primeira execução (dependendo da internet)
+**Tempo estimado**: 
+- Primeira execução com build: 5-10 minutos
+- Startups subsequentes: 60-90 segundos (aguardando health checks)
 
 #### 4. Acesse a Aplicação
 
@@ -207,99 +212,27 @@ Após a inicialização completa, acesse:
 - **Backend API**: [http://localhost:5000](http://localhost:5000) - Documentação Swagger
 - **Embedding API**: [http://localhost:5001](http://localhost:5001) - Documentação OpenAPI
 
-#### 5. Comandos Úteis
+
+#### 6. Ferramentas de Monitoramento
+
+**Monitor de progresso do startup:**
 
 ```bash
-# Ver logs de todos os serviços
-docker-compose logs -f
-
-# Ver logs de um serviço específico
-docker-compose logs -f frontend
-docker-compose logs -f backend-api
-docker-compose logs -f embedding-api
-
-# Parar a aplicação (mantém os dados)
-docker-compose stop
-
-# Parar e remover containers (mantém volumes com dados)
-docker-compose down
-
-# Parar, remover containers E volumes (apaga dados!)
-docker-compose down -v
-
-# Reconstruir apenas um serviço
-docker-compose build frontend
-docker-compose up -d frontend
-
-# Ver status dos serviços
-docker-compose ps
+./startup-monitor.sh  # Progresso visual da inicialização dos serviços
 ```
 
-### Solução de Problemas Docker
-
-#### Erro: "Cannot connect to backend"
+**Monitoramento contínuo de health:**
 
 ```bash
-# Verifique se todos os serviços estão rodando
-docker-compose ps
-
-# Verifique os logs do backend
-docker-compose logs backend-api
+./monitor-health.sh [intervalo_em_segundos]
 ```
 
-#### Erro: "API key not set"
+**Diagnóstico do broker Kafka:**
 
 ```bash
-# Verifique se o arquivo .env existe e contém GEMINI_API_KEY
-cat .env
-
-# Reinicie os serviços
-docker-compose restart
+./diagnose-broker.sh  # Execute se o broker mostrar unhealthy
 ```
 
-#### Porta já em uso
-
-Se receber erro de porta já utilizada, edite o `.env`:
-
-```env
-FRONTEND_PORT=8081  # Em vez de 8080
-BACKEND_API_PORT=5001  # Em vez de 5000
-```
-
-#### Limpar tudo e recomeçar
-
-```bash
-# Remove containers, networks, volumes e imagens
-docker-compose down -v
-docker system prune -a
-
-# Rebuild completo
-docker-compose up --build
-```
-
-### Arquitetura Docker
-
-```
-┌─────────────────┐
-│   Frontend      │  localhost:8080
-│   (nginx)       │  
-└────────┬────────┘
-         │ /api/* → backend-api:5000
-         ↓
-┌─────────────────┐
-│  Backend API    │  localhost:5000
-│   (Flask)       │  
-└────────┬────────┘
-         │ HTTP → embedding-api:5001
-         ↓
-┌─────────────────┐
-│  Embedding API  │  localhost:5001
-│   (Flask)       │  
-└─────────────────┘
-         │ HTTPS → Gemini API
-         ↓
-   Google Gemini
-```
 
 ### Volumes Persistentes
 
@@ -310,64 +243,23 @@ O Docker Compose cria volumes para persistir dados:
 
 **Dados são mantidos entre restarts**, a menos que você execute `docker-compose down -v`.
 
+### Usuários WSL2
+
+1. **Aloque recursos adequados** no `.wslconfig`:
+
+Minha configuração WSL:
+```ini
+[wsl2]
+networkingMode=mirrored
+memory=6GB   # Limits VM memory in WSL 2 up to 6GB
+processors=4 # Makes the WSL 2 VM use 4 virtual processors
+```
+
 ---
 
-## Pré-requisitos
-
-Antes de executar a aplicação, certifique-se de ter:
-
-1. **Navegador Web Moderno**: Chrome, Firefox, Edge ou Safari (versões recentes)
-2. **Backend API em Execução**: O backend deve estar rodando e acessível
-   - Repositório: [mvp-api](https://github.com/GuilhermePFM/mvp-api)
-   - URL padrão: `http://127.0.0.1:5000`
-3. **API de Embeddings em Execução** 
-   - Necessário para a funcionalidade de classificação ML
-   - URL padrão `http://127.0.0.1:5001`
-4. **Servidor Web Local** (para desenvolvimento):
-   - Live Server (extensão do VS Code), ou
-   - Python: `python -m http.server 8000`, ou
-   - Node.js: `npx http-server`
-
-## Como Executar
-
-### Passo 1: Clone o Repositório
-```bash
-git clone https://github.com/seu-usuario/mvp-front-end.git
-cd mvp-front-end
-```
-
-### Passo 2: Configure o Backend
-Siga as instruções de configuração e execução no repositório [mvp-api](https://github.com/GuilhermePFM/mvp-api).
-
-O backend deve estar rodando em `http://127.0.0.1:5000` (configuração padrão).
-
-### Passo 3: Configure a API de Embeddings
-Siga as instruções de configuração e execução no repositório [mvp-embedding](https://github.com/GuilhermePFM/mvp-embedding).
-
-O backend deve estar rodando em `http://127.0.0.1:5001` (configuração padrão).
-
-### Passo 4: Inicie a Aplicação Front-End
-
-**Abrindo Diretamente no Navegador:**
-```bash
-# Simplesmente abra o arquivo index.html no seu navegador
-```
-
-### Passo 5: Acesse a Aplicação
-Abra seu navegador e acesse a URL onde a aplicação está sendo servida. A interface estará pronta para uso!
-
-Com o docker compose rodando, utilize os endpoints:
-|Service|	URL|	Description|
-|-------|-----------|--------|
-|Frontend|	http://localhost:8080|	Main web application|
-|Backend API|	http://localhost:5000	|Backend REST API|
-|Backend Swagger|	http://localhost:5000/openapi/swagger	|Interactive API docs|
-|Backend ReDoc|	http://localhost:5000/openapi/redoc	|Alternative API docs|
-|Embedding API|	http://localhost:5001|	Embedding microservice|
-|Embedding Docs|	http://localhost:5001/openapi|	Embedding API docs|
-
-
 ## Formato do Arquivo de Importação
+
+*O template é disponibilizado neste repositório (front-end)* 
 
 Para utilizar a funcionalidade de importação em lote, seu arquivo Excel (.xlsx) deve seguir o formato específico:
 
@@ -390,8 +282,6 @@ Para utilizar a funcionalidade de importação em lote, seu arquivo Excel (.xlsx
 **Observações:**
 - O arquivo deve conter um cabeçalho com os nomes exatos das colunas
 - Valores em branco na coluna "Categoria" serão preenchidos automaticamente pelo sistema ML
-- Certifique-se de que as pessoas mencionadas já estão cadastradas no sistema
-- Categorias não existentes serão criadas automaticamente (se suportado pelo backend)
 
 ## Organização do Projeto
 
@@ -429,7 +319,8 @@ mvp-front-end/
   - **Funcionalidade principal do projeto**
   - Parse de arquivos Excel (.xlsx) usando a biblioteca SheetJS
   - Validação de formato e estrutura dos dados importados
-  - Integração com a API de classificação ML (`/batchclassifier`)
+  - Integração com API de classificação ML assíncrona (`/api/batch-classify-async`)
+  - Sistema de polling para acompanhar progresso do job
   - Exibição de preview interativo com dropdowns para revisão
   - Formatação de valores monetários e datas
   - Envio de lote de transações para o backend (`/transactions`)
@@ -479,7 +370,14 @@ A aplicação front-end consome os seguintes endpoints do backend:
 - `GET /transactions` - Lista todas as transações
 - `POST /transaction` - Cria uma nova transação individual
 - `POST /transactions` - Importa múltiplas transações em lote
-- `POST /batchclassifier` - Classifica transações usando ML (retorna sugestões de categorias)
+- `POST /api/batch-classify-async` - Submete job de classificação em lote (retorna jobId)
+- `GET /api/batch-jobs/{jobId}` - Consulta status do job (retorna 'processing'/'completed'/'failed')
+
+**Fluxo de Classificação em Lote (Assíncrono):**
+1. POST transações para `/api/batch-classify-async` → recebe `{jobId}`
+2. Poll GET `/api/batch-jobs/{jobId}` a cada 2 segundos
+3. Quando `status: "completed"`, recupera transações classificadas da resposta
+4. Frontend trata isso automaticamente - veja [ASYNC_IMPLEMENTATION.md](ASYNC_IMPLEMENTATION.md)
 
 ### Usuários
 - `GET /users` - Lista todos os usuários/membros da família
