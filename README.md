@@ -12,6 +12,8 @@ A aplicação foi construída utilizando **HTML**, **CSS**, **JavaScript** e **B
   - [Índice](#índice)
   - [Arquitetura do Sistema](#arquitetura-do-sistema)
     - [Componentes do Sistema](#componentes-do-sistema)
+    - [Estratégia de Comunicação](#estratégia-de-comunicação)
+    - [API Externa Gemini](#api-externa-gemini)
     - [Fluxo de Classificação Automática (Assíncrono)](#fluxo-de-classificação-automática-assíncrono)
   - [Funcionalidades](#funcionalidades)
   - [Tecnologias Utilizadas](#tecnologias-utilizadas)
@@ -70,6 +72,119 @@ Este projeto utiliza uma arquitetura de **microserviços distribuídos** com pro
 6. **Classification Worker**: Worker Kafka que consome de `embeddings-results`, classifica transações usando o modelo ML e salva na base de dados
 
 7. **Kafka Topics Init**: Container de inicialização que cria os tópicos necessários (`batch-jobs`, `embeddings-results`).
+
+### Estratégia de Comunicação
+
+O sistema utiliza uma **arquitetura híbrida** combinando comunicação **síncrona** (REST) e **assíncrona** (Kafka) para otimizar performance e escalabilidade:
+
+**Comunicação Síncrona (REST):**
+- Frontend ↔ Backend API: Operações CRUD, consultas imediatas e polling de status
+- Embeddings Worker ↔ Embedding API: Geração de embeddings sob demanda
+- Embedding API ↔ Google Gemini: Chamadas à API externa
+
+**Comunicação Assíncrona (Kafka):**
+- Backend API → Kafka: Publicação de jobs de classificação em lote
+- Kafka → Workers: Distribuição de carga entre múltiplos workers
+- Workers → Kafka: Publicação de resultados intermediários
+
+**Benefícios desta estratégia:**
+- **Desacoplamento**: Frontend não precisa aguardar processamento pesado
+- **Escalabilidade**: Workers podem ser escalados horizontalmente via Kafka consumer groups
+- **Resiliência**: Falhas temporárias são tratadas com retry automático nos workers
+- **Performance**: Processamento paralelo de múltiplos jobs simultaneamente
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend<br/>(Nginx)
+    participant B as Backend API<br/>(Flask)
+    participant K as Kafka Broker
+    participant EW as Embeddings Worker
+    participant EA as Embedding API<br/>(Flask)
+    participant GG as Google Gemini API
+    participant CW as Classification Worker
+    participant DB as Database<br/>(SQLite)
+
+    Note over F,DB: Fluxo de Classificação Assíncrona em Lote
+    
+    F->>B: POST /api/batch-classify-async<br/>(transações)
+    B->>DB: Criar job (status: pending)
+    B->>K: Publicar no tópico 'batch-jobs'
+    B-->>F: 202 Accepted<br/>{jobId: "uuid"}
+    
+    Note over F: Frontend inicia polling
+    
+    loop Polling a cada 2s
+        F->>B: GET /api/batch-jobs/{jobId}
+        B->>DB: Consultar status
+        B-->>F: {status: "processing"}
+    end
+    
+    Note over EW,GG: Worker 1: Processamento de Embeddings
+    
+    EW->>K: Consumir job de 'batch-jobs'
+    EW->>DB: Atualizar status: processing
+    EW->>EA: POST /embedding<br/>(descriptions)
+    EA->>GG: Chamada API Gemini<br/>(embedding generation)
+    GG-->>EA: Embeddings (768 dims)
+    EA-->>EW: Embeddings normalizados
+    EW->>K: Publicar em 'embeddings-results'
+    
+    Note over CW,DB: Worker 2: Classificação ML
+    
+    CW->>K: Consumir de 'embeddings-results'
+    CW->>CW: Executar modelo ML<br/>(classificação)
+    CW->>DB: Salvar resultados<br/>(status: completed)
+    
+    Note over F: Polling detecta conclusão
+    
+    F->>B: GET /api/batch-jobs/{jobId}
+    B->>DB: Consultar job completo
+    DB-->>B: {status: "completed", transactions: [...]}
+    B-->>F: Transações classificadas
+    B->>DB: Deletar job após fetch
+    
+    Note over F: Frontend exibe preview
+    
+    F->>F: Usuário revisa/ajusta categorias
+    F->>B: POST /transactions<br/>(lote final)
+    B->>DB: Salvar transações
+    B-->>F: 201 Created
+```
+
+**Padrões de Comunicação:**
+
+1. **Request-Response Síncrono**: Para operações rápidas (CRUD, consultas simples)
+2. **Fire-and-Forget Assíncrono**: Para processamento pesado (classificação em lote)
+3. **Polling Pattern**: Frontend consulta status periodicamente até conclusão
+4. **Message Queue Pattern**: Kafka desacopla produtores e consumidores
+5. **Worker Pattern**: Processamento distribuído em múltiplos workers especializados
+
+### API Externa Gemini
+
+O sistema utiliza a **API de Embeddings do Google Gemini** para gerar representações vetoriais semânticas das descrições de transações financeiras. Esses embeddings são fundamentais para a classificação automática de transações usando Machine Learning.
+
+**Sobre Embeddings:**
+- Embeddings são representações numéricas de texto que capturam significado semântico
+- Permitem que modelos ML compreendam similaridade entre textos mesmo com palavras diferentes
+- Mais eficazes que abordagens baseadas apenas em palavras-chave
+
+**Configuração do Gemini:**
+- **Modelo**: `gemini-embedding-001` - Modelo otimizado para embeddings de texto
+- **Dimensionalidade**: 768 dimensões (recomendação do Google para este modelo)
+- **Tipo de Tarefa**: `CLASSIFICATION` - Otimizado especificamente para tarefas de categorização
+- **Normalização**: Embeddings são normalizados para comprimento unitário (norma L2 = 1.0)
+
+**Como funciona no sistema:**
+1. O **Embeddings Worker** consome jobs do Kafka contendo descrições de transações
+2. Worker chama a **Embedding API** (microserviço interno) via `POST /embedding`
+3. Embedding API faz requisição REST para `https://generativelanguage.googleapis.com/v1beta/{model}:embedContent`
+4. Google Gemini retorna vetores de 768 dimensões para cada descrição
+5. Embeddings são normalizados e retornados ao worker
+6. Classification Worker utiliza esses embeddings para classificar transações usando modelo ML treinado
+
+**Referências:**
+- [Documentação Oficial - Embeddings REST API](https://ai.google.dev/gemini-api/docs/embeddings#rest)
+- [Cookbook - Quickstart de Embeddings](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Embeddings.ipynb)
 
 
 ### Fluxo de Classificação Automática (Assíncrono)
